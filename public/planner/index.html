@@ -1,0 +1,285 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="theme-color" content="#08111e"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Foundry Planner — Community</title>
+<style>
+:root{
+  --bg:#08111e;--panel:#101d30;--line:#29415f;--text:#f2f7ff;--muted:#9db0c8;
+  --y:#f4c542;--r:#ef5148;--b:#3498db;--cyan:#38bdf8;--good:#49d98a;--warn:#ffd166;
+  --sel:#8be9fd;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+button,textarea,input,select{font:inherit}
+.app{max-width:1400px;margin:auto;padding:10px}
+.top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.top h1{font-size:20px;margin:4px auto 4px 0}
+.btn,.tab,.viewtab{
+  background:#16263b;color:white;border:1px solid var(--line);border-radius:9px;
+  padding:10px 12px;font-weight:800;cursor:pointer;touch-action:manipulation
+}
+.tab.active,.btn.primary,.viewtab.active{background:#087ba9}
+.btn.danger{background:#5a2030}
+.layout{display:grid;grid-template-columns:320px minmax(0,1fr);gap:10px;margin-top:10px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px}
+.panel h2{font-size:14px;margin:0 0 7px}
+.small{font-size:12px;color:var(--muted)}
+textarea{width:100%;background:#07111f;color:white;border:1px solid var(--line);border-radius:8px;padding:8px}
+.players textarea{height:155px}
+.roster{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.chip{
+  display:inline-block;padding:6px 8px;background:#172c47;border:1px solid #4b6d91;
+  border-radius:999px;cursor:pointer;user-select:none;font-size:12px;touch-action:manipulation
+}
+.chip.selected{outline:3px solid var(--sel);background:#204a67}
+.chip.assigned{font-size:10px;padding:4px 6px;margin:1px}
+.rules div{padding:6px 0;border-bottom:1px solid #203650}
+.rules div:last-child{border:0}
+.mapwrap{overflow:auto}
+.map{
+  position:relative;width:1050px;height:1000px;margin:auto;border:1px solid var(--line);
+  border-radius:18px;overflow:hidden;
+  background:radial-gradient(circle at 50% 45%,#705a4c 0,#4a3b38 43%,#202c39 77%,#0b1421 100%)
+}
+.map:after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 45%,transparent 0 61%,rgba(0,0,0,.34) 78%)}
+.zone{position:absolute;border:4px dashed;border-radius:48%;opacity:.62;pointer-events:none;z-index:1}
+.zy{border-color:var(--y);left:3%;top:3%;width:34%;height:67%}
+.zr{border-color:var(--r);left:33%;top:8%;width:36%;height:82%}
+.zb{border-color:var(--b);right:3%;top:3%;width:30%;height:67%}
+.building{
+  position:absolute;width:145px;min-height:122px;transform:translate(-50%,-50%);
+  background:rgba(5,13,25,.95);border:2px solid #59728e;border-radius:12px;padding:7px;z-index:3
+}
+.building.y{border-color:var(--y)} .building.r{border-color:var(--r)} .building.b{border-color:var(--b)}
+.building.anchor{box-shadow:0 0 0 4px rgba(255,209,80,.45)}
+.building:hover,.building:focus-within{z-index:15}
+.building h3{font-size:12px;margin:0 0 5px;text-align:center}
+.slot{
+  position:relative;z-index:8;min-height:31px;border:1px dashed #66809d;border-radius:7px;margin-top:4px;padding:4px;
+  color:var(--muted);cursor:pointer;touch-action:manipulation
+}
+.slot-label{display:block;min-height:18px}
+.slot.lead{border-color:#f5a742}
+.slot.tapready{box-shadow:inset 0 0 0 2px var(--sel);color:white}
+.status{text-align:center;font-size:11px;margin-top:3px}.good{color:var(--good)}.warn{color:var(--warn)}
+.mobile{
+  position:absolute;left:50%;bottom:4px;transform:translateX(-50%);width:255px;z-index:4;
+  background:#071b2b;border:2px solid var(--cyan);border-radius:12px;padding:7px;text-align:center
+}
+.mobile .slot{min-height:36px}
+.legend{position:absolute;left:8px;bottom:8px;z-index:4;background:rgba(4,11,20,.9);padding:6px 8px;border-radius:8px;font-size:11px}
+.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.priority{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 9px}
+.badge{background:#0b1728;border:1px solid var(--line);border-radius:999px;padding:5px 7px;font-size:11px}
+.help{line-height:1.45}
+.selection{
+  padding:9px;border:1px solid #365674;border-radius:9px;background:#0b1728;margin-top:8px
+}
+.selection b{color:var(--sel)}
+.hidden{display:none!important}
+.outputgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.outputcard{background:#0c1828;border:1px solid var(--line);border-radius:10px;padding:10px}
+.outputcard textarea{height:260px}
+.outputcard textarea[readonly]{height:190px;line-height:1.35;font-size:14px;resize:vertical}
+.outtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.copyrow{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.phasehead{font-weight:900;font-size:16px;margin-bottom:8px}
+@media(max-width:850px){
+  .layout{grid-template-columns:1fr}
+  .mapwrap{margin:0 -10px;padding:0 10px}
+  .outputgrid{grid-template-columns:1fr}
+  .app{padding:7px}
+  .top h1{width:100%}
+  .map{width:1050px;height:1000px}
+}
+
+.boardwrap{overflow:auto;padding-bottom:8px}
+.board{
+  min-width:1120px;background:#eef3f8;color:#101820;border:1px solid #9aa8b6;
+  border-radius:10px;overflow:hidden;font-size:12px
+}
+.boardtitle{background:#29a9dd;color:#07131d;font-size:15px;font-weight:900;padding:8px 10px}
+.boardphase{border-top:5px solid #d9e2ec}
+.boardphasehead{display:grid;grid-template-columns:125px 1fr;background:#a8d0f0;font-weight:900;font-size:14px}
+.boardphasehead>div{padding:8px}
+.boardrow{display:grid;grid-template-columns:125px 1fr}
+.boardlabel{background:#f6c3c3;font-size:17px;font-weight:900;padding:12px 8px;display:flex;align-items:center}
+.boardcards{display:flex;align-items:stretch;gap:0;overflow:visible}
+.boardcard{width:155px;flex:0 0 155px;border-left:1px solid #aeb8c2;background:white;text-align:center}
+.boardcard.y .boardcardhead{background:#f4c542}
+.boardcard.r .boardcardhead{background:#ef5148;color:white}
+.boardcard.b .boardcardhead{background:#3498db;color:white}
+.boardcardhead{padding:6px 4px;font-weight:900;min-height:42px;display:flex;align-items:center;justify-content:center}
+.boardbody{padding:7px 5px;line-height:1.35;min-height:105px}
+.boardbody .r1{font-weight:900}
+.boardbody .r2{font-weight:800;margin-top:3px}
+.boardbody .joins{margin-top:5px;font-size:11px}
+.boardmobile{background:#dff5ff;border-top:1px solid #9ebccc;padding:7px 10px;font-weight:800}
+.boardrules{background:#dceaf4;border-top:1px solid #9ebccc;padding:7px 10px;font-weight:700}
+
+
+.sharepanel{
+  margin-top:10px;background:#10253b;border:2px solid #38bdf8;border-radius:12px;padding:10px
+}
+.sharepanel textarea{height:92px;font-size:12px}
+.sharestatus{margin-top:8px;padding:8px 10px;border-radius:8px;background:#0b1728;border:1px solid #29415f}
+.sharestatus.good{color:#d9fff0;border-color:#49d98a}
+
+select{background:#07111f;color:white;border:1px solid var(--line);border-radius:8px;padding:10px;max-width:100%}
+.chip{color:#fff;text-align:left}.chip-green{background:#123f31;border-color:#49d98a}.chip-mobile{background:#4d3b13;border-color:#ffd166}.chip-red{background:#4c1e2b;border-color:#ff748a}.chip.selected{outline:3px solid #8be9fd}.roster-summary{padding:8px;border:1px solid #49d98a;border-radius:8px;margin:8px 0;color:#b5fbd2;font-weight:800}.roster-summary.has-missing{border-color:#ff748a;color:#ffd0d9}
+
+.phase-settings label{display:block;margin:8px 0;font-size:12px;color:var(--muted)}
+.phase-settings input:not([type=checkbox]),.phase-settings select{width:100%;background:#07111f;color:white;border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:4px}
+.phase-settings .check{display:flex;align-items:center;gap:7px;color:var(--text)}
+.target-row{padding:9px 0;border-top:1px solid var(--line);margin-top:8px}
+.target-row strong{display:block;margin-bottom:6px}.target-row .toolbar{margin-bottom:0}
+.target-row .btn{padding:5px 9px}.target-fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.target-row .zone-field{grid-column:1/-1}.building h3{line-height:1.4}.target-number{color:var(--sel)}
+.phase-settings #targetBuilding{flex:1;min-width:120px}.phase-settings #addTarget{flex-shrink:0}
+.btn:disabled{opacity:.45;cursor:default}.boardcard.neutral .boardcardhead{background:#d9e2ec}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <h1>🏭 Foundry Planner — Community</h1>
+    <button class="viewtab active" data-view="planner">Planner</button>
+    <button class="viewtab" data-view="outputs">Plan Extracts</button>
+    <button class="viewtab" data-view="board">Overall Board</button>
+    <button class="btn primary" id="cloudSave">Save to Cloud</button><button class="btn" id="cloudLoad">Saved Plans</button><button class="btn" id="cloudNew">Save Cloud Copy</button><button class="btn" id="cloudLinks">Cloud Links</button>
+    <button class="btn" id="save">Save on Device</button>
+    <button class="btn" id="load">Load Device Save</button>
+    <button class="btn primary" id="sharePlan">Share Plan</button>
+    <button class="btn danger" id="reset">Reset</button>
+  </div>
+
+  <div id="cloudStatus" class="sharestatus">Cloud saves are shared with everyone in Saved Plans. Save on Device keeps a plan in this browser.</div>
+  <div id="sharedLoaded" class="sharestatus good hidden">
+    ✅ Shared plan loaded from the link. You can edit it normally. It will not replace your device save unless you press <b>Save on Device</b>.
+  </div>
+
+  <div id="sharePanel" class="sharepanel hidden">
+    <b>🔗 Share this exact plan</b>
+    <div class="small" style="margin:4px 0 7px">Share this snapshot with another planner. They can open it, edit it and share an updated snapshot. Cloud Links always open the latest cloud save.</div>
+    <textarea id="shareLink" readonly></textarea>
+    <div class="copyrow">
+      <button class="btn primary" id="copyShareLink">Copy Share Link</button>
+      <button class="btn" id="closeShare">Close</button>
+    </div>
+  </div>
+
+  <section id="plannerView">
+    <div class="top" style="margin-top:8px">
+      <button class="tab active" data-p="p1">Phase 1</button>
+      <button class="tab" data-p="p2">Phase 2</button>
+      <button class="tab" data-p="p3">Phase 3</button>
+    </div>
+
+    <div class="layout">
+      <aside>
+        <div class="panel players">
+          <h2>1. Paste roster in strength order</h2>
+          <div class="small">One player per line. On Chrome/mobile: <b>tap a player, then tap Rally Lead 1 / Rally Lead 2 / Joiners / Mobile Whale</b>.</div>
+          <textarea id="input" placeholder="Player One&#10;Player Two&#10;Reserve Player (Sub)"></textarea>
+          <div class="toolbar">
+            <button class="btn primary" id="rosterBtn">Load roster</button>
+            <button class="btn" id="autoFill">Fill by priority</button>
+            <button class="btn" id="resetOverrides">Reset local overrides</button>
+          </div>
+          <div id="selection" class="selection">Selected: <b>none</b><br><span class="small">Tap a player to select them.</span></div>
+          <div id="rosterSummary" class="roster-summary"></div><div class="toolbar"><button class="btn" id="filterMissing">Unassigned only</button><button class="btn" id="undo">Undo last change</button></div><div id="roster" class="roster"></div>
+          <div class="toolbar" style="margin-top:8px">
+            <button class="btn" id="unassign">Unassign selected</button>
+            <button class="btn" id="clearSelection">Clear selection</button>
+          </div>
+        </div>
+
+        <div class="panel"><h2>Battle Commander</h2><select id="commander" aria-label="Battle Commander"><option value="">None</option></select><div class="small">Separate from building assignments.</div></div>
+        <div class="panel phase-settings">
+          <h2>Phase settings</h2>
+          <label>Phase name<input id="phaseName" maxlength="80" aria-label="Phase name"></label>
+          <label>Base assignments<select id="basePhase" aria-label="Base assignments"></select></label>
+          <div class="small">Phases start independently. Choose a base only if you want to follow its assignments unchanged. Manual changes stay local to this phase.</div>
+          <label class="check"><input id="zonesEnabled" type="checkbox"> Show support zones</label>
+          <h2 style="margin-top:14px">Targets &amp; priorities</h2>
+          <div class="small">Add targets, set their priority and optional team size. Fill by priority keeps existing assignments and leaves substitutes for manual placement.</div>
+          <div class="toolbar" style="margin-top:8px"><select id="targetBuilding" aria-label="Target building"></select><button class="btn" id="addTarget">Add target</button></div>
+          <div id="targetSettings"></div>
+        </div>
+
+        <div class="panel help">
+          <h2>Chrome/mobile controls</h2>
+          <b>Tap method:</b> tap a player → tap the target Lead/Joiners/Mobile slot.<br>
+          You can also tap an already-assigned player, then tap a different slot to move them.<br>
+          Drag-and-drop is still supported on desktop.
+        </div>
+      </aside>
+
+      <main>
+        <div class="panel">
+          <div class="toolbar">
+            <button class="btn primary" id="transition">View next phase →</button>
+            <button class="btn" id="clear">Clear phase</button>
+            <button class="btn" id="toOutputs">Generate plan extracts</button>
+          </div>
+          <div id="priority" class="priority" aria-label="Target priority order"></div>
+          <div class="mapwrap"><div id="map" class="map"></div></div>
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <section id="outputsView" class="hidden">
+    <div class="panel" style="margin-top:10px">
+      <div class="toolbar">
+        <button class="btn primary" id="generateAll">Generate all extracts</button>
+        <button class="btn" id="backPlanner">Back to planner</button>
+      </div>
+      <div class="small">This is deliberately separate from the map so the finished plan can be reviewed and copied without scrolling around the planner.</div>
+    </div>
+
+    <div class="panel">
+      <div class="phasehead">In-game messages — copy one phase at a time</div>
+      <div class="small" style="margin-bottom:10px">Compact format for game chat: one building per line, lead first, no blank lines.</div>
+      <div class="outputgrid">
+        <div class="outputcard"><b data-phase-label="p1">Phase 1</b><textarea id="game_p1" readonly></textarea><div class="copyrow"><button class="btn primary" data-copy="game_p1">Copy Phase 1 in-game</button></div></div>
+        <div class="outputcard"><b data-phase-label="p2">Phase 2</b><textarea id="game_p2" readonly></textarea><div class="copyrow"><button class="btn primary" data-copy="game_p2">Copy Phase 2 in-game</button></div></div>
+        <div class="outputcard"><b data-phase-label="p3">Phase 3</b><textarea id="game_p3" readonly></textarea><div class="copyrow"><button class="btn primary" data-copy="game_p3">Copy Phase 3 in-game</button></div></div>
+      </div>
+    </div>
+    <details class="panel"><summary style="cursor:pointer;font-weight:800">Discord detailed extracts (optional)</summary>
+      <div class="outputgrid" style="margin-top:10px">
+        <div class="outputcard"><b data-phase-label="p1">Phase 1</b><textarea id="discord_p1"></textarea><div class="copyrow"><button class="btn" data-copy="discord_p1">Copy Phase 1 Discord</button></div></div>
+        <div class="outputcard"><b data-phase-label="p2">Phase 2</b><textarea id="discord_p2"></textarea><div class="copyrow"><button class="btn" data-copy="discord_p2">Copy Phase 2 Discord</button></div></div>
+        <div class="outputcard"><b data-phase-label="p3">Phase 3</b><textarea id="discord_p3"></textarea><div class="copyrow"><button class="btn" data-copy="discord_p3">Copy Phase 3 Discord</button></div></div>
+      </div>
+    </details>
+  </section>
+
+  <section id="boardView" class="hidden">
+    <div class="panel" style="margin-top:10px">
+      <div class="toolbar">
+        <button class="btn primary" id="refreshBoard">Refresh board</button>
+        <button class="btn" id="copyBoardText">Copy board as text</button>
+        <button class="btn" id="backPlannerBoard">Back to planner</button>
+      </div>
+      <div class="small">One-page overview of all phases, designed in the same spirit as the old Google Sheets/formatter board.</div>
+    </div>
+    <div class="boardwrap"><div id="overallBoard" class="board"></div></div>
+  </section>
+
+</div>
+
+<dialog id="savedPlansDialog" style="background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:12px;width:min(540px,94vw);max-height:85vh">
+<div class="toolbar"><h2 style="margin:0;flex:1">Shared Plans</h2><button class="btn" id="refreshSavedPlans">Refresh</button><button class="btn" id="closeSavedPlans">Close</button></div>
+<p class="small">Cloud plans available to everyone using this app. Open a plan, update your own save, or save a copy.</p>
+<input id="savedPlansSearch" type="search" maxlength="120" placeholder="Search shared plans" aria-label="Search saved plans" style="width:100%;padding:10px;margin-bottom:10px">
+<p id="savedPlansStatus" class="small" role="status" aria-live="polite"></p>
+<div id="savedPlansList"></div>
+<button class="btn hidden" id="moreSavedPlans" style="margin-top:12px">Load more plans</button>
+</dialog>
+<script type="module" src="./planner.mjs"></script>
+</body>
+</html>

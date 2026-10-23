@@ -1,0 +1,1 @@
+{"name": "Foundry Planner — Community", "short_name": "Foundry Planner", "description": "Map-based Foundry planner with user-defined targets and priorities", "start_url": "./", "scope": "./", "display": "standalone", "background_color": "#08111e", "theme_color": "#08111e", "icons": [{"src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any"}]}
