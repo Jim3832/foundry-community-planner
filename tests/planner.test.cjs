@@ -36,7 +36,7 @@ test('local lead overrides win when an inherited base later changes into that sl
 test('compact output uses target order, leads first, consistent icons and substitutes last',()=>{
  const p=plan();p.settings.p1.targets=[target('R1',4)];
  p.master={p5:{building:'R1',role:'join'},p3:{building:'R1',role:'join'},p1:{building:'R1',role:'lead2'},p0:{building:'R1',role:'lead1'}};
- const out=phaseOutputs(p,'p1');assert.equal(out.game,'Phase 1\n🔧 R1: One, Two, Four, Reserve (Sub)');
+ const out=phaseOutputs(p,'p1');assert.equal(out.game,'Phase 1\n🟡 🔧 R1: One, Two, Four, Reserve (Sub)');
  assert.match(out.discord,/🟡 🔧 R1/);p.settings.p1.zones=false;assert.ok(!phaseOutputs(p,'p1').discord.includes('🟡'));
  p.settings.p2.source='p1';assert.match(phaseOutputs(p,'p2').game,/🔧 R1: One, Two, Four, Reserve \(Sub\)/);
 });
@@ -57,4 +57,21 @@ test('long copy output is split below Discord limits without losing names or Uni
  const parts=splitCopyText(text);assert.ok(parts.length>1);assert.equal(parts.join(''),text.replace('\n',''));
  assert.ok(parts.every(s=>s.length<=3900&&!/[\uD800-\uDBFF]$/.test(s)&&! /^[\uDC00-\uDFFF]/.test(s)));
  for(const name of names)assert.ok(parts.join('').includes(name));
+});
+
+test('in-game lines use each phase saved support colour, including inherited assignments',()=>{
+ const p=plan();p.players=[{id:'lead',name:'Jim2'},{id:'join',name:'Jake'},{id:'sub',name:'Pej [SUB]'}];
+ p.master={sub:{building:'Boiler',role:'join'},lead:{building:'Boiler',role:'lead1'},join:{building:'Boiler',role:'join'}};
+ for(const [i,ph] of PHASES.entries()){
+  p.settings[ph].source=ph==='p1'?null:'p1';
+  p.settings[ph].targets=[{...target('Boiler',3),zone:['y','r','b'][i]}];
+ }
+ const before=JSON.stringify(p);
+ for(const [i,ph] of PHASES.entries()){
+  const expected=['🟡','🔴','🔵'][i]+' 🔥 Boiler: Jim2, Jake, Pej (Sub)';
+  assert.equal(phaseOutputs(p,ph).game,p.settings[ph].label+'\n'+expected);
+ }
+ assert.equal(JSON.stringify(p),before);
+ p.settings.p3.zones=false;
+ assert.equal(phaseOutputs(p,'p3').game,'Phase 3\n🔥 Boiler: Jim2, Jake, Pej (Sub)');
 });

@@ -93,7 +93,7 @@ export function phaseOutputs(state,ph) {
     discord.push('');
     const ids=[...d.lead1,...d.lead2,...d.join];
     ids.sort((a,b)=>Number(isSub(names.get(a)))-Number(isSub(names.get(b))));
-    game.push(buildingIcon(t.name)+' '+t.name+': '+ids.map(name).join(', '));
+    game.push((settings.zones?zoneIcon(t.zone)+' ':'')+buildingIcon(t.name)+' '+t.name+': '+ids.map(name).join(', '));
   }
   const mobile=Object.entries(deriveAssignments(state,ph)).filter(([,a])=>a.building==='Mobile').map(([id])=>name(id));
   if(mobile.length) { discord.push('MOBILE WHALE: '+mobile.join(', ')); game.push('🐋 Mobile: '+mobile.join(', ')); }
